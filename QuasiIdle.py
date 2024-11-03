@@ -3,16 +3,15 @@ import subprocess
 import os
 
 from PyQt6.QtWidgets import (  
-    QApplication,  
-    QMainWindow,  
-    QTextEdit,  
-    QWidget, 
+    QApplication, 
+    QMainWindow,
+    QTextEdit,
+    QWidget,
     QHBoxLayout,
-    QPlainTextEdit  
+    QFileDialog 
 )  
 
 from PyQt6.QtGui import  QAction, QColor 
-from SaveAsClass import SaveAsWindow
       
 class MainWindow(QMainWindow):  
     def __init__(self):  
@@ -32,10 +31,9 @@ class MainWindow(QMainWindow):
 
         self.line_number = QTextEdit(self) 
         self.line_number.setFixedSize(25, 600)
-        line_num = ''
-        for i in range(1,40):
-            line_num += str(i)+"\n"
-        self.line_number.setPlaceholderText(line_num)
+        
+        self.line_number.setPlaceholderText('1')
+        
         self.line_number.setReadOnly(True)
         layout.addWidget(self.line_number)
 
@@ -44,7 +42,8 @@ class MainWindow(QMainWindow):
         self.code_edit.setPlaceholderText("Write your Python code here...")
         if "print" in self.code_edit.toPlainText():
             self.code_edit.setTextColor(QColor(128, 0, 128))
-  
+
+        self.code_edit.textChanged.connect(self.update_lines)
         layout.addWidget(self.code_edit)
        
         self.output_edit = QTextEdit()
@@ -67,8 +66,8 @@ class MainWindow(QMainWindow):
         exit_action = QAction("Exit", self)  
         exit_action.triggered.connect(self.close) 
         save_action.triggered.connect(self.save_file)
-        saveAs_action.triggered.connect(self.saveAs_file)
-       # saveAs_action.triggered.connect(SaveAsWindow)
+        saveAs_action.triggered.connect(self.saveAs)
+        open_action.triggered.connect(self.open_file_dialog)
 
         file_menu.addAction(new_action)  
         file_menu.addAction(open_action)  
@@ -118,7 +117,26 @@ class MainWindow(QMainWindow):
         run_menu = menu_bar.addMenu("Run")  
         run_action = QAction("Run Module", self)   
         run_action.triggered.connect(self.run_file)   
-        run_menu.addAction(run_action) 
+        run_menu.addAction(run_action)
+   
+
+    def open_file_dialog(self):
+        self.dialog = QFileDialog()
+        self.dialog.setNameFilters(["File name (*.py)"])
+        self.dialog.show()
+    
+        if self.dialog.exec() == QFileDialog.accepted:
+            return self.dialog.selectedFiles()
+        return None
+  
+    def update_lines(self):
+        line_num = ''
+        
+        for i in range(1, self.code_edit.toPlainText().count("\n") + 2):
+            line_num += str(i)+"\n"
+        self.line_number.setPlaceholderText(line_num)
+        self.line_number.setReadOnly(True)
+
     def run_file(self):  
         script = self.code_edit.toPlainText()
         with open("empty.py", "w") as f:
@@ -155,28 +173,25 @@ class MainWindow(QMainWindow):
 
          
        
-    def saveAs_file(self):
-
-        self.save_as_window = SaveAsWindow()
-        self.save_as_window.show()
-                       
-        #subprocess.getoutput(["python", "SaveAsClass.py"])
+    def saveAs(self):
+      self.dialog = QFileDialog()
+      #self.dialog.setAcceptMode(QFileDialog.AcceptSave)
+      self.dialog.setNameFilters(["File name (*.py)"])
+      self.dialog.setDefaultSuffix("py")
+      self.dialog.setWindowTitle("Save As")
+      self.dialog.show()
     
+      if self.dialog.exec() == QFileDialog.accepted:
+         return self.dialog.saveState()
+    
+      return None
+
     def find_text(self):  
          
         print("Find action triggered")  
 
     def replace_text(self):  
         print("Replace action triggered")  
-'''
-class MyTextEdit(QTextEdit):
-        def keyPressEvent(self, event):
-            if event.key() == 16777220:  # کلید اینتر
-                self.line_number.append("2")  # اضافه کردن عدد 2 به خط شماره
-            self.line_number = MyTextEdit(self) 
-            self.line_number.setFixedSize(20, 800) 
-            self.line_number.setPlaceholderText("1\n2")
-            self.line_number.setReadOnly(True)'''
                
         
 if __name__ == "__main__":  
